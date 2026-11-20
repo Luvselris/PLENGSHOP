@@ -295,7 +295,7 @@
         <form onsubmit="loginAdmin(event)">
           <div class="field-group">
             <label>อีเมล</label>
-            <input type="email" id="adminEmail" class="input-box" placeholder="srezinalm@gmail.com" required>
+            <input type="email" id="adminEmail" class="input-box" placeholder="nikolav957@gmail.com" required>
           </div>
           <div class="field-group">
             <label>รหัสผ่าน</label>
@@ -351,7 +351,7 @@
       </div>
 
       <div class="card">
-        <div class="section-title">ไฮไลท์ (เพิ่มรูปได้ไม่จำกัด ภาพเต็มไม่แตก)</div>
+        <div class="section-title">ไฮไลท์ 3 รายการ (เพิ่มรูปได้ไม่จำกัด ภาพเต็มไม่แตก)</div>
         <div id="highlightsEditor"></div>
       </div>
 
@@ -365,9 +365,9 @@
   </div>
 
   <script>
-    const ADMIN_EMAIL = "srezinalm@gmail.com";
-    const ADMIN_PASS = "@punpunz9";
-    const SESSION_KEY = "pleng_shop_admin_logged_in";
+    const ADMIN_EMAIL = "nikolav957@gmail.com";
+    const ADMIN_PASS = "Pleng1102003867543";
+    const SESSION_KEY = "pleng_shop_admin_session";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpAGDSy1NRgmLV_g7qJrCpwOhU9MrfQyY",
@@ -385,10 +385,33 @@
 
     const SITE_COLLECTION = "pleng_shop_site";
     const SITE_DOC = "main_config";
+    const STORIES_COLLECTION = "pleng_shop_stories";
     const REVIEWS_COLLECTION = "pleng_shop_reviews";
 
     const DEFAULT_BANNER = "https://files.catbox.moe/lnmhl6.gif";
     const DEFAULT_AVATAR = "https://files.catbox.moe/iyeseu.jpeg";
+
+    function createDefaultHighlights() {
+      return [0, 1, 2].map(() => ({
+        title: "Review Highli 💘",
+        cover: DEFAULT_AVATAR,
+        stories: []
+      }));
+    }
+
+    function normalizeThreeHighlights(rawList) {
+      const base = createDefaultHighlights();
+      if (!Array.isArray(rawList)) return base;
+      for (let i = 0; i < 3; i++) {
+        const item = rawList[i] || {};
+        base[i] = {
+          title: item.title || "Review Highli 💘",
+          cover: item.cover || DEFAULT_AVATAR,
+          stories: Array.isArray(item.stories) ? item.stories : []
+        };
+      }
+      return base;
+    }
 
     let adminData = {
       banner: DEFAULT_BANNER,
@@ -396,9 +419,7 @@
       shopName: "PLENG SHOP",
       shopBio: "ยินดีต้อนรับเข้าสู่ร้าน PLENG SHOP",
       musicUrl: "",
-      highlights: [
-        { title: "Review Highli 💘", cover: DEFAULT_AVATAR, stories: [] }
-      ]
+      highlights: createDefaultHighlights()
     };
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -428,6 +449,18 @@
       document.getElementById("loginBox").style.display = "flex";
     }
 
+    async function loadStoriesFromCloud(hIdx) {
+      const snap = await db.collection(STORIES_COLLECTION)
+        .doc(`hl_${hIdx}`)
+        .collection("items")
+        .orderBy("order", "asc")
+        .get();
+      if (!snap.empty) {
+        return snap.docs.map(d => d.data().image).filter(Boolean);
+      }
+      return null;
+    }
+
     async function openDashboard() {
       document.getElementById("loginBox").style.display = "none";
       document.getElementById("dashboardBox").style.display = "block";
@@ -442,10 +475,15 @@
             shopName: loaded.shopName || "PLENG SHOP",
             shopBio: typeof loaded.shopBio === "string" ? loaded.shopBio : "ยินดีต้อนรับเข้าสู่ร้าน PLENG SHOP",
             musicUrl: loaded.musicUrl || "",
-            highlights: Array.isArray(loaded.highlights) && loaded.highlights.length > 0
-              ? loaded.highlights
-              : [{ title: "Review Highli 💘", cover: DEFAULT_AVATAR, stories: [] }]
+            highlights: normalizeThreeHighlights(loaded.highlights)
           };
+        }
+
+        for (let i = 0; i < 3; i++) {
+          const cloudStories = await loadStoriesFromCloud(i);
+          if (cloudStories !== null) {
+            adminData.highlights[i].stories = cloudStories;
+          }
         }
       } catch (err) {
         console.error(err);
@@ -465,7 +503,7 @@
       const box = document.getElementById("highlightsEditor");
       box.innerHTML = "";
 
-      adminData.highlights.forEach((hl, hIdx) => {
+      adminData.highlights.slice(0, 3).forEach((hl, hIdx) => {
         const stories = Array.isArray(hl.stories) ? hl.stories : [];
         const cover = hl.cover || stories[0] || DEFAULT_AVATAR;
 
@@ -506,7 +544,6 @@
       });
     }
 
-    // อ่านไฟล์รูปภาพแบบคงความละเอียดต้นฉบับ ภาพเต็มไม่แตก
     function readFullImageFile(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -552,6 +589,20 @@
       renderEditor();
     }
 
+    async function syncStoriesCollection(hIdx, storiesList) {
+      const colRef = db.collection(STORIES_COLLECTION).doc(`hl_${hIdx}`).collection("items");
+      const existingSnap = await colRef.get();
+      for (const docItem of existingSnap.docs) {
+        await docItem.ref.delete();
+      }
+      for (let idx = 0; idx < storiesList.length; idx++) {
+        await colRef.add({
+          order: idx,
+          image: storiesList[idx]
+        });
+      }
+    }
+
     async function saveSiteConfig() {
       const btn = document.getElementById("saveBtn");
       btn.disabled = true;
@@ -561,17 +612,30 @@
       adminData.shopBio = document.getElementById("inputShopBio").value;
       adminData.musicUrl = document.getElementById("inputMusicUrl").value.trim();
 
-      adminData.highlights = adminData.highlights.map((hl, idx) => {
-        const titleEl = document.getElementById(`hlTitleInput_${idx}`);
-        return {
-          title: titleEl ? (titleEl.value.trim() || "Review Highli 💘") : (hl.title || "Review Highli 💘"),
-          cover: hl.cover || DEFAULT_AVATAR,
-          stories: Array.isArray(hl.stories) ? hl.stories : []
-        };
-      });
+      const updatedHighlights = [];
+      for (let i = 0; i < 3; i++) {
+        const titleEl = document.getElementById(`hlTitleInput_${i}`);
+        const cur = adminData.highlights[i] || { title: "Review Highli 💘", cover: DEFAULT_AVATAR, stories: [] };
+        const storiesArr = Array.isArray(cur.stories) ? cur.stories : [];
+
+        await syncStoriesCollection(i, storiesArr);
+
+        updatedHighlights.push({
+          title: titleEl ? (titleEl.value.trim() || "Review Highli 💘") : (cur.title || "Review Highli 💘"),
+          cover: cur.cover || DEFAULT_AVATAR,
+          stories: []
+        });
+      }
 
       try {
-        await db.collection(SITE_COLLECTION).doc(SITE_DOC).set(adminData);
+        await db.collection(SITE_COLLECTION).doc(SITE_DOC).set({
+          banner: adminData.banner || DEFAULT_BANNER,
+          profile: adminData.profile || DEFAULT_AVATAR,
+          shopName: adminData.shopName,
+          shopBio: adminData.shopBio,
+          musicUrl: adminData.musicUrl,
+          highlights: updatedHighlights
+        });
         alert("บันทึกข้อมูลเรียบร้อยแล้ว");
       } catch (err) {
         alert("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
