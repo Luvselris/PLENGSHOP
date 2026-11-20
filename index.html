@@ -108,28 +108,27 @@
       margin-bottom: 14px;
     }
 
+    /* จัด 3 ไฮไลท์ให้อยู่กึ่งกลางเป๊ะๆ */
     .highlights-row {
-      display: flex;
-      gap: 16px;
-      overflow-x: auto;
-      padding: 4px 2px 6px;
-      justify-content: center;
-      scrollbar-width: none;
-    }
-
-    .highlights-row::-webkit-scrollbar {
-      display: none;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+      justify-items: center;
+      padding: 4px 0 6px;
+      width: 100%;
     }
 
     .highlight-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       background: none;
       border: none;
       cursor: pointer;
-      flex-shrink: 0;
-      width: 84px;
+      width: 100%;
+      max-width: 112px;
     }
 
     .highlight-ring {
@@ -157,7 +156,8 @@
       font-weight: 600;
       color: var(--text-main);
       margin-top: 6px;
-      max-width: 84px;
+      width: 100%;
+      text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
