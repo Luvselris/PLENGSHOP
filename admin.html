@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - PLENG SHOP</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-top: #f9e6ee;
+      --bg-bottom: #f2cadb;
+      --card-bg: rgba(255, 250, 252, 0.96);
+      --border-pink: #eab6cb;
+      --pink-deep: #c95d89;
+      --text-main: #5c434d;
+      --text-muted: #947682;
+      --shadow-soft: 0 8px 24px rgba(214, 130, 165, 0.22);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Quicksand', 'Mitr', sans-serif !important;
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 20px 14px 64px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    #loginBox {
+      min-height: 75vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-pink);
+      border-radius: 24px;
+      padding: 18px 16px;
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--pink-deep);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--pink-deep);
+      margin-bottom: 12px;
+    }
+
+    .field-group {
+      margin-bottom: 12px;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .input-box, .textarea-box {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-pink);
+      border-radius: 16px;
+      font-size: 13px;
+      background: #ffffff;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .input-box:focus, .textarea-box:focus {
+      border-color: var(--pink-deep);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f3a6c3, var(--pink-deep));
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .btn-upload {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f3a6c3, var(--pink-deep));
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .error-msg {
+      color: var(--pink-deep);
+      font-size: 12.5px;
+      text-align: center;
+      margin-top: 8px;
+      display: none;
+    }
+
+    #dashboardBox {
+      display: none;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .top-header h2 {
+      font-size: 17px;
+      color: var(--pink-deep);
+    }
+
+    .btn-logout {
+      padding: 6px 12px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border-pink);
+      background: #ffffff;
+      color: var(--pink-deep);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .preview-banner {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border-pink);
+    }
+
+    .preview-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto 8px;
+      border: 1.5px solid var(--border-pink);
+    }
+
+    .hl-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border-pink);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .hl-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .hl-cover {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border-pink);
+    }
+
+    .stories-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .story-cell {
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      border: 1.5px dashed var(--border-pink);
+      position: relative;
+      overflow: hidden;
+      background: #fff9fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .story-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .del-btn {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(201, 93, 137, 0.9);
+      color: #ffffff;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .add-cell-label {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pink-deep);
+      cursor: pointer;
+    }
+
+    .review-admin-card {
+      background: #ffffff;
+      border: 1px solid var(--border-pink);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-del-review {
+      padding: 5px 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border-pink);
+      background: #fff5f8;
+      color: var(--pink-deep);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="loginBox">
+      <div class="card">
+        <h1 class="title">Admin - PLENG SHOP</h1>
+        <form onsubmit="loginAdmin(event)">
+          <div class="field-group">
+            <label>อีเมล</label>
+            <input type="email" id="adminEmail" class="input-box" placeholder="srezinalm@gmail.com" required>
+          </div>
+          <div class="field-group">
+            <label>รหัสผ่าน</label>
+            <input type="password" id="adminPass" class="input-box" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary">เข้าสู่ระบบ</button>
+          <p id="loginErr" class="error-msg">อีเมลหรือรหัสผ่านไม่ถูกต้อง</p>
+        </form>
+      </div>
+    </div>
+
+    <div id="dashboardBox">
+      <div class="top-header">
+        <h2>จัดการร้าน PLENG SHOP</h2>
+        <button type="button" class="btn-logout" onclick="logoutAdmin()">ออกจากระบบ</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title">ข้อมูลร้านและรูปภาพ</div>
+
+        <div class="field-group">
+          <label>แบนเนอร์</label>
+          <img id="prevBanner" class="preview-banner" src="https://files.catbox.moe/lnmhl6.gif" alt="Banner Preview">
+          <label class="btn-upload">
+            เลือกรูปแบนเนอร์
+            <input type="file" accept="image/*" style="display: none;" onchange="setMainImage(this, 'banner', 'prevBanner')">
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label>โปรไฟล์</label>
+          <img id="prevAvatar" class="preview-avatar" src="https://files.catbox.moe/iyeseu.jpeg" alt="Profile Preview">
+          <label class="btn-upload">
+            เลือกรูปโปรไฟล์
+            <input type="file" accept="image/*" style="display: none;" onchange="setMainImage(this, 'profile', 'prevAvatar')">
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label>ชื่อร้าน</label>
+          <input type="text" id="inputShopName" class="input-box" value="PLENG SHOP">
+        </div>
+
+        <div class="field-group">
+          <label>คำอธิบายร้าน</label>
+          <textarea id="inputShopBio" class="textarea-box" rows="3"></textarea>
+        </div>
+
+        <div class="field-group" style="margin-bottom: 0;">
+          <label>ลิงก์เพลง (เว้นว่างไว้ก่อนได้)</label>
+          <input type="url" id="inputMusicUrl" class="input-box" placeholder="">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">ไฮไลท์ (เพิ่มรูปได้ไม่จำกัด ภาพเต็มไม่แตก)</div>
+        <div id="highlightsEditor"></div>
+      </div>
+
+      <button type="button" id="saveBtn" class="btn-primary" style="margin-bottom: 16px;" onclick="saveSiteConfig()">บันทึกข้อมูล</button>
+
+      <div class="card">
+        <div class="section-title">จัดการรีวิวจากลูกค้า</div>
+        <div id="adminReviewsList">กำลังโหลดรีวิว...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "srezinalm@gmail.com";
+    const ADMIN_PASS = "@punpunz9";
+    const SESSION_KEY = "pleng_shop_admin_logged_in";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCpAGDSy1NRgmLV_g7qJrCpwOhU9MrfQyY",
+      authDomain: "benefitie.firebaseapp.com",
+      projectId: "benefitie",
+      storageBucket: "benefitie.firebasestorage.app",
+      messagingSenderId: "270365672215",
+      appId: "1:270365672215:web:230d1491091e26ce83ed52"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    const SITE_COLLECTION = "pleng_shop_site";
+    const SITE_DOC = "main_config";
+    const REVIEWS_COLLECTION = "pleng_shop_reviews";
+
+    const DEFAULT_BANNER = "https://files.catbox.moe/lnmhl6.gif";
+    const DEFAULT_AVATAR = "https://files.catbox.moe/iyeseu.jpeg";
+
+    let adminData = {
+      banner: DEFAULT_BANNER,
+      profile: DEFAULT_AVATAR,
+      shopName: "PLENG SHOP",
+      shopBio: "ยินดีต้อนรับเข้าสู่ร้าน PLENG SHOP",
+      musicUrl: "",
+      highlights: [
+        { title: "Review Highli 💘", cover: DEFAULT_AVATAR, stories: [] }
+      ]
+    };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (sessionStorage.getItem(SESSION_KEY) === "true") {
+        openDashboard();
+      }
+    });
+
+    function loginAdmin(e) {
+      e.preventDefault();
+      const email = document.getElementById("adminEmail").value.trim();
+      const pass = document.getElementById("adminPass").value;
+      const err = document.getElementById("loginErr");
+
+      if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+        sessionStorage.setItem(SESSION_KEY, "true");
+        err.style.display = "none";
+        openDashboard();
+      } else {
+        err.style.display = "block";
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem(SESSION_KEY);
+      document.getElementById("dashboardBox").style.display = "none";
+      document.getElementById("loginBox").style.display = "flex";
+    }
+
+    async function openDashboard() {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("dashboardBox").style.display = "block";
+
+      try {
+        const doc = await db.collection(SITE_COLLECTION).doc(SITE_DOC).get();
+        if (doc.exists) {
+          const loaded = doc.data() || {};
+          adminData = {
+            banner: loaded.banner || DEFAULT_BANNER,
+            profile: loaded.profile || DEFAULT_AVATAR,
+            shopName: loaded.shopName || "PLENG SHOP",
+            shopBio: typeof loaded.shopBio === "string" ? loaded.shopBio : "ยินดีต้อนรับเข้าสู่ร้าน PLENG SHOP",
+            musicUrl: loaded.musicUrl || "",
+            highlights: Array.isArray(loaded.highlights) && loaded.highlights.length > 0
+              ? loaded.highlights
+              : [{ title: "Review Highli 💘", cover: DEFAULT_AVATAR, stories: [] }]
+          };
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      renderEditor();
+      watchAdminReviews();
+    }
+
+    function renderEditor() {
+      document.getElementById("prevBanner").src = adminData.banner || DEFAULT_BANNER;
+      document.getElementById("prevAvatar").src = adminData.profile || DEFAULT_AVATAR;
+      document.getElementById("inputShopName").value = adminData.shopName || "PLENG SHOP";
+      document.getElementById("inputShopBio").value = adminData.shopBio || "";
+      document.getElementById("inputMusicUrl").value = adminData.musicUrl || "";
+
+      const box = document.getElementById("highlightsEditor");
+      box.innerHTML = "";
+
+      adminData.highlights.forEach((hl, hIdx) => {
+        const stories = Array.isArray(hl.stories) ? hl.stories : [];
+        const cover = hl.cover || stories[0] || DEFAULT_AVATAR;
+
+        const cellsHtml = stories.map((imgSrc, sIdx) => `
+          <div class="story-cell">
+            <img src="${imgSrc}" alt="Story">
+            <button type="button" class="del-btn" onclick="deleteStoryPic(${hIdx}, ${sIdx})">✕</button>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = "hl-card";
+        card.innerHTML = `
+          <div class="hl-top">
+            <img src="${cover}" class="hl-cover" id="hlCoverImg_${hIdx}" alt="Cover">
+            <div style="flex: 1;">
+              <input type="text" id="hlTitleInput_${hIdx}" class="input-box" value="${escapeAttr(hl.title || 'Review Highli 💘')}" style="margin-bottom: 6px;">
+              <label class="btn-upload">
+                เปลี่ยนรูปปก
+                <input type="file" accept="image/*" style="display: none;" onchange="setCoverPic(this, ${hIdx})">
+              </label>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
+            รูปในสตอรี่ (${stories.length} รูป - ไม่จำกัดจำนวน)
+          </div>
+          <div class="stories-grid">
+            ${cellsHtml}
+            <div class="story-cell">
+              <label class="add-cell-label">
+                +
+                <input type="file" accept="image/*" multiple style="display: none;" onchange="addStoryPics(this, ${hIdx})">
+              </label>
+            </div>
+          </div>
+        `;
+        box.appendChild(card);
+      });
+    }
+
+    // อ่านไฟล์รูปภาพแบบคงความละเอียดต้นฉบับ ภาพเต็มไม่แตก
+    function readFullImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function setMainImage(input, key, prevId) {
+      if (!input.files || !input.files[0]) return;
+      const dataUrl = await readFullImageFile(input.files[0]);
+      adminData[key] = dataUrl;
+      document.getElementById(prevId).src = dataUrl;
+      input.value = "";
+    }
+
+    async function setCoverPic(input, hIdx) {
+      if (!input.files || !input.files[0]) return;
+      const dataUrl = await readFullImageFile(input.files[0]);
+      adminData.highlights[hIdx].cover = dataUrl;
+      document.getElementById(`hlCoverImg_${hIdx}`).src = dataUrl;
+      input.value = "";
+    }
+
+    async function addStoryPics(input, hIdx) {
+      if (!input.files || input.files.length === 0) return;
+      if (!Array.isArray(adminData.highlights[hIdx].stories)) {
+        adminData.highlights[hIdx].stories = [];
+      }
+
+      for (const file of Array.from(input.files)) {
+        const dataUrl = await readFullImageFile(file);
+        adminData.highlights[hIdx].stories.push(dataUrl);
+      }
+
+      input.value = "";
+      renderEditor();
+    }
+
+    function deleteStoryPic(hIdx, sIdx) {
+      adminData.highlights[hIdx].stories.splice(sIdx, 1);
+      renderEditor();
+    }
+
+    async function saveSiteConfig() {
+      const btn = document.getElementById("saveBtn");
+      btn.disabled = true;
+      btn.textContent = "กำลังบันทึก...";
+
+      adminData.shopName = document.getElementById("inputShopName").value.trim() || "PLENG SHOP";
+      adminData.shopBio = document.getElementById("inputShopBio").value;
+      adminData.musicUrl = document.getElementById("inputMusicUrl").value.trim();
+
+      adminData.highlights = adminData.highlights.map((hl, idx) => {
+        const titleEl = document.getElementById(`hlTitleInput_${idx}`);
+        return {
+          title: titleEl ? (titleEl.value.trim() || "Review Highli 💘") : (hl.title || "Review Highli 💘"),
+          cover: hl.cover || DEFAULT_AVATAR,
+          stories: Array.isArray(hl.stories) ? hl.stories : []
+        };
+      });
+
+      try {
+        await db.collection(SITE_COLLECTION).doc(SITE_DOC).set(adminData);
+        alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+      } catch (err) {
+        alert("บันทึกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "บันทึกข้อมูล";
+      }
+    }
+
+    function watchAdminReviews() {
+      db.collection(REVIEWS_COLLECTION).onSnapshot(snap => {
+        const box = document.getElementById("adminReviewsList");
+        if (snap.empty) {
+          box.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 13px;">ไม่มีรีวิวในระบบ</p>`;
+          return;
+        }
+
+        const docs = [];
+        snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+        box.innerHTML = docs.map(item => `
+          <div class="review-admin-card">
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 13px;">${escapeHtml(item.name || "ลูกค้า")}</div>
+              <div style="font-size: 12px;">${"⭐️".repeat(item.stars || 5)}</div>
+              <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(item.feedback || "")}</div>
+            </div>
+            <button type="button" class="btn-del-review" onclick="removeReview('${item.id}')">ลบ</button>
+          </div>
+        `).join("");
+      });
+    }
+
+    async function removeReview(docId) {
+      if (!confirm("ต้องการลบรีวิวนี้ใช่หรือไม่")) return;
+      try {
+        await db.collection(REVIEWS_COLLECTION).doc(docId).delete();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function escapeAttr(str) {
+      return String(str).replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
